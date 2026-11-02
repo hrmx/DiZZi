@@ -11,6 +11,7 @@
     "dev": "vite --host",
     "build": "vite build",
     "lint": "eslint .",
+    "test": "node --test 'backend/**/*.test.js'",
     "preview": "vite preview",
     "electron": "npm run build && electron .",
     "dist": "npm run build && electron-builder",
