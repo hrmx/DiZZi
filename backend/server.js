@@ -1,3 +1,4 @@
+import process from 'node:process';
 import express from 'express';
 import { createServer } from 'http';
 import { WebSocketServer } from 'ws';
@@ -19,14 +20,14 @@ let deviceStatus = 'disconnected';
 app.use(express.json());
 
 app.get('/api/config', (_req, res) => {
-  res.json({ aiEnabled: AI_ENABLED });
+  res.json({ aiEnabled: AI_ENABLED, playerName: process.env.PLAYER_NAME || '' });
 });
 
 app.post('/api/tts', async (req, res) => {
   if (!AI_ENABLED) return res.status(404).json({ error: 'AI disabled' });
 
   const { text, voice } = req.body;
-  if (!text) return res.status(400).json({ error: 'text is required' });
+  if (typeof text !== 'string' || !text) return res.status(400).json({ error: 'text is required' });
 
   try {
     const wav = await llm.speak(text, voice);
@@ -56,6 +57,32 @@ app.post('/api/reset', async (req, res) => {
     res.status(503).json({ error: error.message });
   }
 });
+
+const DEBUG = process.env.DEBUG === 'true';
+const fakeLaunches = [];
+
+if (DEBUG) {
+  console.log('DEBUG endpoints enabled: POST /api/debug/launch');
+
+  // emits a fake launch shaped like decoder.js output, so the normal recording handler runs
+  app.post('/api/debug/launch', (req, res) => {
+    const rpm = req.body?.rpm;
+    if (typeof rpm !== 'number' || !Number.isFinite(rpm) || rpm <= 0) {
+      return res.status(400).json({ error: 'rpm must be a positive number' });
+    }
+
+    fakeLaunches.push(rpm);
+    const launchesValues = [...fakeLaunches];
+    bleEvents.emit('recording', {
+      highScore: Math.max(...launchesValues),
+      launchesValues,
+      lifetimeCounter: launchesValues.length,
+      status: 'launched',
+      battery: 100,
+    });
+    res.json({ message: 'FAKE LAUNCH SENT!', launchesValues });
+  });
+}
 
 app.use(express.static(DIST));
 
@@ -92,6 +119,7 @@ bleEvents.on('recording', async (recording) => {
 
   try {
     const comment = await llm.askBrain(recording);
+    console.log('Comment:', comment);
 
     broadcast({ type: 'comment', comment });
   } catch (err) {
@@ -109,7 +137,7 @@ export const ready = new Promise((resolve) => {
     if (AI_ENABLED) {
       console.log("Loading AI features...");
       // load both models in the background so the first launch isn't slow
-      llm.speak("hello")
+      llm.speak("こんにちは")
         .then(() => { console.log('Voice model ready'); })
         .catch((err) => console.error('Voice model warm-up failed: ', err.message));
 
