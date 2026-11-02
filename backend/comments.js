@@ -1,8 +1,12 @@
-import { readdirSync } from 'node:fs';
+import { existsSync, readdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import _ from 'lodash';
 
-export const AUDIO_DIR = fileURLToPath(new URL('./public/audio', import.meta.url));
+const DEFAULT_AUDIO_DIR = fileURLToPath(new URL('./public/audio', import.meta.url));
+const LOCAL_AUDIO_DIR = fileURLToPath(new URL('./public/audio-local', import.meta.url));
+
+// name-embedded clips are generated locally (scripts/gen-ja-clips.mjs) and gitignored
+export const AUDIO_DIR = existsSync(LOCAL_AUDIO_DIR) ? LOCAL_AUDIO_DIR : DEFAULT_AUDIO_DIR;
 
 // same threshold the frontend uses for spin_slow / spin_fast
 const GOOD_LAUNCH_RPM = 5000;

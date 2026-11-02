@@ -46,6 +46,7 @@ const toggleFullSceen = () => {
 function App() {
   const [expiredRecording, setExpiredRecording] = useState(null);
   const [aiEnabled, setAiEnabled] = useState(false);
+  const [playerName, setPlayerName] = useState('');
   const [battery, setBattery] = useState(undefined);
   const [requested, setRequested] = useState(false);
 
@@ -67,13 +68,13 @@ function App() {
       }
 
       if (rec.status === 'attached') {
-        say(...sample([['3, 2, 1, go shoot!!!', 'shoot1'], ['Let it rip!!!', 'shoot2']]));
+        say(...sample([['3、2、1、ゴーシュート！', 'shoot1'], [playerName ? `いくぞ、${playerName}！` : 'いくぞ！', 'shoot2']]));
       } else if (rec.status === 'dropped') {
-        say('Did you just drop your beyblade?', 'drop');
+        say('あれ、ベイを落としちゃった？', 'drop');
       } else if (rec.status === 'reset') {
-        say('Reset successful!', 'reset');
+        say('リセットしたよ！', 'reset');
       } else if (rec.status === 'history') {
-        say('LP data loaded successfully!', 'load');
+        say('データを読み込んだよ！', 'load');
       }
     },
     // the backend sends a sentence when AI is on, or a clip name when it's off
@@ -83,7 +84,10 @@ function App() {
   useEffect(() => {
     fetch('/api/config')
       .then((r) => r.json())
-      .then((cfg) => setAiEnabled(cfg.aiEnabled));
+      .then((cfg) => {
+        setAiEnabled(cfg.aiEnabled);
+        setPlayerName(cfg.playerName || '');
+      });
   }, []);
 
   useEffect(() => {

@@ -13,6 +13,7 @@
     "lint": "eslint .",
     "test": "node --test 'backend/**/*.test.js'",
     "fake-launch": "node --env-file-if-exists=.env --env-file-if-exists=.env.local scripts/fake-launch.mjs",
+    "gen-ja-clips": "node --env-file-if-exists=.env --env-file-if-exists=.env.local scripts/gen-ja-clips.mjs",
     "preview": "vite preview",
     "electron": "npm run build && electron .",
     "dist": "npm run build && electron-builder",
